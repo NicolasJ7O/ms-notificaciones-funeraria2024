@@ -25,7 +25,7 @@ public class NotificacionesController : ControllerBase
         msg.SetTemplateData(new
         {
             name = datos.nombreDestino,
-            message = "Bienvenido a la comunidad de la inmobiliaria."
+            message = "Bienvenido a la comunidad de la funeraria."
         });
         var response = await client.SendEmailAsync(msg);
         if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
@@ -102,6 +102,45 @@ public class NotificacionesController : ControllerBase
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
         return msg;
     }
+
+    //Envío funeral service ticket
+
+    [Route("ticket-funeral-service")]
+[HttpPost]
+public async Task<ActionResult> EnviarTicketFuneralService(ModeloCorreo datos)
+{
+    // Obtener la clave API de SendGrid de las variables de entorno
+    var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+    var client = new SendGridClient(apiKey);
+
+    // Crear el mensaje base utilizando SendGrid
+    SendGridMessage msg = CrearMensajeBase(datos);
+
+    // Asignar el ID de la plantilla para el correo de ticket de servicio funerario
+    msg.SetTemplateId(Environment.GetEnvironmentVariable("TwoFA_SENDGRID_TEMPLATE_ID"));
+
+    // Asignar los datos a la plantilla
+    msg.SetTemplateData(new
+    {
+            nombre = datos.nombreDestino,
+            mensaje = datos.contenidoCorreo,
+            asunto = datos.asuntoCorreo
+    });
+
+    // Enviar el correo electrónico
+    var response = await client.SendEmailAsync(msg);
+
+    // Verificar si el correo fue enviado con éxito
+    if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
+    {
+        return Ok("Correo de ticket de servicio funerario enviado a la dirección " + datos.correoDestino);
+    }
+    else
+    {
+        return BadRequest("Error enviando el correo de ticket de servicio funerario a la dirección: " + datos.correoDestino);
+    }
+}
+
 
     // Envío de SMS
 
